@@ -1,12 +1,18 @@
 const express = require("express");
 const cors = require("cors");
-const { uuid } = require("uuidv4");
+const { uuid, isUuid } = require("uuidv4");
 
-import CheckUUIDMidleware from './middlewares/checkUUIDMiddleware';
+function checkUUID(request, response, next) {
+  const { id } = request.params;
+  if (!isUuid(id)) {
+    return response.status(400).json({ error: 'Invalid repository ID.' });
+  }
+  return next();
+};
 
 const app = express();
 
-app.use('/repositories/:id', CheckUUIDMidleware);
+app.use('/repositories/:id', checkUUID);
 
 app.use(express.json());
 app.use(cors());
@@ -29,7 +35,7 @@ app.post("/repositories", (request, response) => {
 
   repositories.push(repository);
 
-  return response.json(repositories);
+  return response.json(repository);
 });
 
 app.put("/repositories/:id", (request, response) => {
@@ -42,12 +48,10 @@ app.put("/repositories/:id", (request, response) => {
     return response.status(400).json({ error: 'Repository not found' });
   }
 
-  const repository = {
-    id,
-    title,
-    url,
-    techs,
-  };
+  const repository = repositories[repositoryIndex];
+  repository.title = title;
+  repository.url = url;
+  repository.techs = techs;
   repositories[repositoryIndex] = repository;
 
   return response.json(repository);
